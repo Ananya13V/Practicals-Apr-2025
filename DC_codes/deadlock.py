@@ -28,14 +28,14 @@ class Bankers:
                     safe_sequence.append(self.processes[i])
                     progress = True
                     break
-                if not progress:
-                    return None
-                
+            if not progress:
+                return None
+
         return safe_sequence
-    
+
 if __name__ == "__main__":
     processes = ['P0', 'P1', 'P2', 'P3', 'P4']
-    resources = [3, 3, 2]
+    resources = [3, 3, 2]  # Available
 
     max_resources = [
         [7, 5, 3],
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         [9, 0, 2],
         [2, 2, 2],
         [4, 3, 3],
-    ]
+    ]  # Max resources that can be offered to each process
 
     allocations = [
         [0, 1, 0],
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         [3, 0, 2],
         [2, 1, 1],
         [0, 0, 2],
-    ]
+    ]  # Resources already allocated to each process
 
     bankers_algorithm = Bankers(processes, resources)
     bankers_algorithm.set_allocations(allocations)
