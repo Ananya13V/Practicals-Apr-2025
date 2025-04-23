@@ -1,0 +1,471 @@
+#############################################
+#1Content
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+df = pd.read_csv(r"SMA_codes\SMA 1-3 Dataset.csv")
+
+vectoriser = TfidfVectorizer(max_features=10, stop_words = 'english')
+
+X = vectoriser.fit_transform(df['Content'])
+
+keywords = vectoriser.get_feature_names_out()
+
+print("Top Keywords : ", keywords)
+
+lda = LatentDirichletAllocation(n_components = 3, random_state = 42)
+lda.fit(X)
+
+for idx, topic in enumerate(lda.components_):
+    print(f"Topic #{idx}: ")
+    top_words = [vectoriser.get_feature_names_out()[i] for i in topic.argsort()[:-11:-1]]
+    print(", ".join(top_words))
+
+wordcloud = WordCloud(width = 800, height = 400, background_color='white').generate(' '.join(df['Content']))
+
+plt.figure(figsize=(10,6))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.show()
+
+################################################################################################
+#2Location
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv(r"SMA_codes\SMA 1-3 Dataset.csv")
+
+location_count = df['Location'].value_counts()
+print(location_count)
+
+top_locations = location_count.head(10)
+
+plt.figure(figsize=(10,6))
+top_locations.plot(kind = 'bar', color = 'skyblue')
+plt.title('Top 10 locations')
+plt.xlabel('Location')
+plt.ylabel('Frequency')
+plt.show()
+
+############################################################
+#3trend
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("SMA_codes\\SMA 1-3 Dataset.csv")
+print(df.head())
+
+vectoriser = TfidfVectorizer(stop_words = 'english', max_features = 10)
+X = vectoriser.fit_transform(df['Content'])
+
+keywords = vectoriser.get_feature_names_out()
+
+print("Top 10 Keywords: ", keywords)
+
+keyword_count = X.sum(axis=0).A1
+
+plt.figure(figsize=(10, 5))
+plt.barh(keywords, keyword_count, color='skyblue')
+plt.title('Top 10 Keywords in Content')
+plt.xlabel('Keywords')
+plt.ylabel('Frequency')
+plt.show()
+
+############
+# Using data of likes, comment and hashtag
+
+df['Post_Date'] = pd.to_datetime(df['Post_Date'])
+df['Year'] = df['Post_Date'].dt.year
+df['Month'] = df['Post_Date'].dt.month
+df['Day'] = df['Post_Date'].dt.day
+
+monthly_engagement = df.groupby(['Year','Month'])['Likes'].sum()
+monthly_comments = df.groupby(['Year', 'Month'])['Comments'].mean()
+
+### Hashtag Analysis ###
+
+df['Hashtags'] = df['Hashtags'].fillna('')
+hashtags = df['Hashtags'].str.lower().str.split('#').sum()
+hashtags = [hashtag.strip() for hashtag in hashtags if hashtag.strip() != '']
+hashtag_count = pd.Series(hashtags).value_counts()
+print("Top 10 hashtags: ", hashtag_count.head(10))
+
+plt.figure(figsize=(10, 5))
+monthly_engagement.plot(kind = 'line', marker='o', color='blue')
+plt.title('Monthly Engagement Over Time')
+plt.xlabel('Year-Month')
+plt.ylabel('Total likes')
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(10, 5))
+monthly_comments.plot(kind="line", marker="o", color="blue")
+plt.title("Average comments over a Month's time")
+plt.xlabel("Year-Month")
+plt.ylabel("Average Comments")
+plt.show()
+
+plt.figure(figsize=(10, 5))
+hashtag_count.plot(kind="line", marker="o", color="blue")
+plt.title("Hashtags by Freq")
+plt.xlabel("Hashtags")
+plt.ylabel("Frequency")
+plt.show()
+
+#############################################################################
+#4hashtag
+# Hashtag Analysis
+
+import pandas as pd
+import re
+from collections import Counter
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+import seaborn as sns
+
+df = pd.read_csv("SMA_codes/SMA 1-3 Dataset.csv")
+
+print(df.columns)
+print(df.head())
+print(df.info())
+
+hash = 'Hashtags'
+# Convert hashtags string to list
+df["hashtags"] = df["Hashtags"].fillna("").apply(lambda x: x.lower().split())
+
+# Flatten the list of all hashtags
+all_hashtags = [tag for sublist in df["hashtags"] for tag in sublist]
+
+# Count frequency of hashtags
+hashtag_counts = Counter(all_hashtags)
+top_hash = hashtag_counts.most_common(4)
+
+hashtag_df = pd.DataFrame(top_hash, columns=['Hashtag', 'Count'])
+
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(hashtag_counts)
+
+
+plt.figure(figsize=(10,5))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.title("Top Hashtags WordCloud")
+plt.show()
+
+
+plt.figure(figsize=(12,6))
+sns.barplot(data=hashtag_df, x = 'Count', y = 'Hashtag', palette='viridis')
+plt.title("Top 4 hashtags")
+plt.xlabel("Frequency")
+plt.ylabel("Hashtag")
+plt.show()
+
+###########################################################################
+#5sentiment
+# Sentiment Analysis
+
+import pandas as pd
+from textblob import TextBlob
+import matplotlib.pyplot as plt
+import seaborn as sns
+from wordcloud import WordCloud
+
+df = pd.read_csv('SMA_codes\SMA 1-3 Dataset.csv')
+
+def get_sentiment(text):
+    blob = TextBlob(str(text))
+    return blob.sentiment.polarity
+
+df['polarity'] = df['Content'].apply(get_sentiment)
+
+def classify_sentiment(score):
+    if score > 0:
+        return 'Positive'
+    elif score < 0:
+        return 'Negative'
+    else:
+        return 'Neutral'
+
+df['sentiment'] = df['polarity'].apply(classify_sentiment)
+
+
+plt.figure(figsize=(10,6))
+sns.countplot(data=df, x="sentiment", hue=None, palette="coolwarm", legend=False)
+plt.title('Sentiment Classification')
+plt.xlabel("Sentiment")
+plt.ylabel("Number of Posts")
+plt.show()
+
+plus = ' '.join(df[df['sentiment'] == 'Positive']['Content'].dropna().astype(str))
+minus = ' '.join(df[df['sentiment'] == 'Negative']['Content'].dropna().astype(str))
+
+wordcloud_pos = WordCloud(
+    width = 800, height = 400, background_color = 'white', colormap="Greens"
+    ).generate(plus)
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud_pos, interpolation="bilinear")
+plt.axis("off")
+plt.title("Positive Content WordCloud")
+plt.show()
+
+wordcloud_neg = WordCloud(
+    width=800, height=400, background_color="black", colormap="Reds"
+).generate(minus)
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud_neg, interpolation="bilinear")
+plt.axis("off")
+plt.title("Negative Content WordCloud")
+plt.show()
+
+################################################################################
+#6engagement
+# Engagement Analysis
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from textblob import TextBlob
+
+df = pd.read_csv(r"SMA_codes\SMA 1-3 Dataset.csv")
+
+df['polarity'] = df['Content'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
+df['sentiment'] = df['polarity'].apply(lambda x: 'Positive' if x > 0 else ('Negative' if x < 0 else 'Neutral'))
+
+df['engagement'] = (df['Likes'] + df['Comments'] + df['Shares']) / df['Followers']
+
+#According to Content_Type
+plt.figure(figsize=(8,5))
+sns.barplot(data = df, x = 'Content_Type', y = 'engagement', palette='viridis')
+plt.title("Average Engagement according to Content Type")
+plt.ylabel("Engagement Rate")
+plt.xlabel("Content Type")
+plt.show()
+
+#According to Sentiment
+plt.figure(figsize=(8,5))
+sns.boxplot(data = df, x="sentiment", y = 'engagement', palette = 'coolwarm')
+plt.title("Engagement Rate by Sentiment")
+plt.ylabel("Engagement Rate")
+plt.xlabel("Sentiment")
+plt.show()
+
+#####################################################################################
+#7 exploratory
+import pandas as pd 
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import seaborn as sns
+import networkx as nx
+
+df = pd.read_csv(r"SMA_codes/SMA 1-3 Dataset.csv")
+# barplot for likes by content type
+plt.figure(figsize=(10,5))
+sns.barplot(data = df, x = 'Content_Type', y = 'Likes', estimator = 'sum', hue = 'Content_Type')
+plt.title("Total Likes by Content Type")
+plt.xlabel("Content Type")
+plt.ylabel("Total Likes")
+plt.show()
+
+# scatterplot for comments by content type
+plt.figure(figsize=(10,5))
+sns.scatterplot(data = df, x = 'Comments', y = 'Likes', hue = 'Content_Type', s = 100)
+plt.title("Likes vs Comments by Content Type")
+plt.xlabel("Comments")
+plt.ylabel("Likes")
+plt.legend(title = 'Content Type')
+plt.show()
+
+# scatter for shares by content type
+plt.figure(figsize=(10,5))
+plt.scatter(df['Shares'], df['Likes'], s = df['Followers']/10, alpha = 0.6, c = 'teal', edgecolors = 'w')
+plt.title("Likes vs Shares by Followers")
+plt.xlabel("Shares")
+plt.ylabel("Likes")
+plt.show()
+
+# heatmap for correlation
+plt.figure(figsize=(10,5))
+sns.heatmap(df[['Likes', 'Comments', 'Shares', 'Followers']].corr(), annot = True, cmap = 'coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+#### Network Graph: Hashtag using Co-occurence
+df['Hashtags'] = df['Hashtags'].astype(str)
+df['HashtagsList'] = df['Hashtags'].apply(lambda x: [h.strip() for h in x.split()])
+
+edges = []
+for tags in df['HashtagsList']:
+    for i in range(len(tags)):
+        for j in range(i+1, len(tags)):
+            edges.append((tags[i], tags[j]))
+
+G = nx.Graph()
+G.add_edges_from(edges)
+plt.figure(figsize=(12, 8))
+nx.draw(G, with_labels=True, node_color = 'lightcoral', edge_color = 'gray', node_size=1000, font_size=10)
+plt.title('Hashtag Co-Occurence Network')
+plt.show()
+
+### WordCloud ###
+hashtags = " ".join(df["Hashtags"].astype(str).tolist())
+wordcloud = WordCloud(width = 800, height = 400, background_color = 'white', colormap = 'viridis').generate(hashtags)
+
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.title('Hashtag WordCloud')
+plt.show()
+
+###############################################################################################################################
+#8 Brand
+import pandas as pd
+from textblob import TextBlob
+import matplotlib.pyplot as plt
+
+data = {
+    "Post_ID": [101, 102, 103, 104, 105],
+    "Content": [
+        "BrandX has the best products I've ever used!",
+        "Terrible experience with BrandX customer service.",
+        "Loving the new BrandX product range!",
+        "Neutral about BrandX. Could be better.",
+        "BrandX is doing a great job with sustainability!",
+    ],
+    "Likes": [100, 20, 300, 50, 450],
+    "Comments": [10, 5, 40, 2, 20],
+    "Shares": [5, 1, 5, 0, 5],
+}
+df = pd.DataFrame(data)
+
+# Step 1 : Filter for the brand
+brand = "BrandX"
+brand_posts = df[df['Content'].str.contains(brand, case = False, na = False)]
+
+# Step 2 : Sentiment Analysis
+brand_posts['Polarity'] = brand_posts['Content'].apply(lambda text: TextBlob(text).sentiment.polarity)
+brand_posts['Sentiment'] = brand_posts['Polarity'].apply(
+    lambda polarity: 
+    'Postive' if polarity > 0 
+    else 'Negative' if polarity < 0 
+    else 'Neutral')
+
+# Step 3 : Calculate Total Engagement (Likes + Comments + Shares)
+brand_posts['Total Engagement'] = brand_posts['Likes'] + brand_posts['Comments'] + brand_posts['Shares']
+
+# Step 4 : Sentiment Distribution
+sentiment_counts = brand_posts['Sentiment'].value_counts()
+
+# Step 5 : Plot Sentiment Distribution
+
+plt.figure(figsize=(8, 5))
+sentiment_counts.plot(kind = 'bar', color = ['green', 'red', 'gray'], edgecolor = 'black')
+plt.title(f'Sentiment Distribution for {brand}')
+plt.xlabel('Sentiment')
+plt.ylabel('Count')
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+
+# Step 6 : Top - Engaging Posts
+top_brand_posts = brand_posts.sort_values(by="Total_Engagement", ascending=False).head(5)
+print(f"\nTop 5 Most Engaging Posts for {brand}:")
+print(top_brand_posts[["Post_ID", "Content", "Total_Engagement", "Sentiment"]])
+
+################################################################################################
+#9 Competitor
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df = pd.read_csv(r"SMA_codes\sma_ques9_dataset.csv")
+
+print(df.groupby("competitor")[['likes', 'comments', 'shares']].mean())
+
+platform_dist = df.groupby(['competitor', 'platform']).size().unstack()
+print(platform_dist)
+
+sentiment_dist = df.groupby(['competitor', 'sentiment']).size().unstack(fill_value=0)
+print(sentiment_dist)
+
+plt.figure(figsize=(10, 6))
+sns.barplot(data=df, x="competitor", y="likes", estimator="mean")
+plt.title("Average Likes by Competitor")
+plt.ylabel("Average Likes")
+plt.show()
+
+## cutie
+plt.figure(figsize=(10, 6))
+sns.countplot(data=df, x="competitor", hue="sentiment")
+plt.title("Sentiment Distribution by Competitor")
+plt.ylabel("Number of Posts")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=df, x="competitor", y="shares")
+plt.title("Shares Distribution by Competitor")
+plt.ylabel("Shares")
+plt.show()
+
+####################################################################
+#10 Social Network - Girvan Newmann
+import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+from networkx.algorithms.community import girvan_newman
+from sklearn.cluster import KMeans
+import numpy as np
+
+df = pd.read_csv(r"SMA_codes\sma_ques10_dataset.csv")
+G = nx.Graph()
+G.add_edges_from(zip(df["source"], df["target"]))
+
+communities = girvan_newman(G)
+top_level_communities = next(communities)
+
+colors = ['red', 'blue', 'green', 'yellow', 'purple']
+color_map = {}
+
+for i, community in enumerate(top_level_communities):
+    for node in community:
+        color_map[node] = colors[i%len(colors)]
+
+node_colors = [color_map.get(node, 'gray') for node in G.nodes()]
+plt.figure(figsize=(10, 6))
+nx.draw(G, with_labels = True, node_color=node_colors, node_size=500)
+plt.title("Social Network Graph with Communities")
+plt.show()
+
+### Kmeans Clustering on Centrality Features
+
+degree_contrality = nx.degree_centrality(G)
+betweeness_centrality = nx.betweenness_centrality(G)
+
+features = []
+nodes = list(G.nodes())
+for node in nodes:
+    features.append([degree_contrality[node],betweeness_centrality[node]])
+
+features = np.array(features)
+
+kmeans = KMeans(n_clusters=3, random_state=0)
+labels = kmeans.fit_predict(features)
+
+# Plot KMeans clustering
+plt.figure(figsize=(8, 5))
+plt.scatter(features[:, 0], features[:, 1], c=labels, s=100)
+# for i, node in enumerate(nodes):
+#     plt.text(features[i, 0], features[i, 1], node, fontsize=9, ha="right")
+plt.xlabel("Degree Centrality")
+plt.ylabel("Betweenness Centrality")
+plt.title("KMeans Clustering of Nodes Based on Centrality")
+plt.show()
+
+sorted_nodes = sorted(betweeness_centrality.items(), key=lambda x: x[1], reverse=True)
+print("\nTop Influential Nodes (by Betweenness Centrality):")
+for node, score in sorted_nodes[:5]:
+    print(f"{node}: {score:.4f}")
+
+#########################################################################################

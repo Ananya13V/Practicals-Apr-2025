@@ -21,7 +21,7 @@ plt.xlabel('Keywords')
 plt.ylabel('Frequency')
 plt.show()
 
-##########################################################################
+############
 # Using data of likes, comment and hashtag
 
 df['Post_Date'] = pd.to_datetime(df['Post_Date'])

@@ -5,7 +5,7 @@ import seaborn as sns
 import networkx as nx
 
 df = pd.read_csv(r"SMA_codes/SMA 1-3 Dataset.csv")
-
+# barplot for likes by content type
 plt.figure(figsize=(10,5))
 sns.barplot(data = df, x = 'Content_Type', y = 'Likes', estimator = 'sum', hue = 'Content_Type')
 plt.title("Total Likes by Content Type")
@@ -13,6 +13,7 @@ plt.xlabel("Content Type")
 plt.ylabel("Total Likes")
 plt.show()
 
+# scatterplot for comments by content type
 plt.figure(figsize=(10,5))
 sns.scatterplot(data = df, x = 'Comments', y = 'Likes', hue = 'Content_Type', s = 100)
 plt.title("Likes vs Comments by Content Type")
@@ -21,6 +22,7 @@ plt.ylabel("Likes")
 plt.legend(title = 'Content Type')
 plt.show()
 
+# scatter for shares by content type
 plt.figure(figsize=(10,5))
 plt.scatter(df['Shares'], df['Likes'], s = df['Followers']/10, alpha = 0.6, c = 'teal', edgecolors = 'w')
 plt.title("Likes vs Shares by Followers")
@@ -28,6 +30,7 @@ plt.xlabel("Shares")
 plt.ylabel("Likes")
 plt.show()
 
+# heatmap for correlation
 plt.figure(figsize=(10,5))
 sns.heatmap(df[['Likes', 'Comments', 'Shares', 'Followers']].corr(), annot = True, cmap = 'coolwarm')
 plt.title("Correlation Heatmap")
@@ -51,10 +54,8 @@ plt.title('Hashtag Co-Occurence Network')
 plt.show()
 
 ### WordCloud ###
-hashtags = ' '.join(df['Hashtags'].astype(str).tolist())
-
+hashtags = " ".join(df["Hashtags"].astype(str).tolist())
 wordcloud = WordCloud(width = 800, height = 400, background_color = 'white', colormap = 'viridis').generate(hashtags)
-
 
 plt.figure(figsize=(10, 5))
 plt.imshow(wordcloud, interpolation='bilinear')
